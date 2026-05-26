@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🧠 Когнитивный тест</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header-row">
+        <header>
+            <h1>🧠 Когнитивный тест</h1>
+            <div class="subtitle"></div>
+        </header>
+        <div class="global-timer">⏱️ Общее время теста: <span id="globalTimerDisplay">0:00</span></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-patient">👤 Пациент</button>
+        <button class="tab-btn" data-tab="tab-test">📋 Тестирование</button>
+        <button class="tab-btn" data-tab="tab-clock">🖌️ Рисование часов</button>
+        <button class="tab-btn" data-tab="tab-animals">🐾 Назвать животных</button>
+        <button class="tab-btn" data-tab="tab-stats">📊 Динамика</button>
+    </div>
+
+    <div id="tab-patient" class="tab-content active">
+        <div class="card">
+            <h2>Информация о пациенте</h2>
+            <div class="form-group"><label>Имя пациента</label><input type="text" id="patientName" placeholder="Иван Петрович"></div>
+            <div class="form-group"><label>Дата рождения</label><input type="date" id="patientBirth"></div>
+            <button id="savePatientBtn" class="btn btn-primary">💾 Сохранить профиль</button>
+            <button id="clearAllDataBtn" class="btn btn-danger">🗑️ Очистить все данные</button>
+            <div id="patientInfo" class="info-box"></div>
+        </div>
+    </div>
+
+    <div id="tab-test" class="tab-content">
+        <div class="card">
+            <h2>📝 Тест на запоминание слов</h2>
+            <div id="testBlock">
+                <div id="initialBlock">
+                    <div class="info-box">📖 Вам будут показаны 10 слов. Постарайтесь их запомнить.</div>
+                    <button id="startTestBtn" class="btn btn-primary">▶️ Начать тестирование</button>
+                </div>
+                <div id="memorizeBlock" style="display: none;">
+                    <div class="words-container" id="wordsContainer"></div>
+                    <div class="timer-badge">⏱️ Время на запоминание: <span id="memorizeTimer">30</span> сек</div>
+                    <button id="finishMemorizeBtn" class="btn btn-primary">✅ Я запомнил(а) (закончить раньше)</button>
+                </div>
+                <div id="recallBlock" style="display: none;">
+                    <div class="info-box">📝 Введите слова, которые запомнили (через пробел, в любом порядке, строчными буквами)</div>
+                    <div class="form-group"><textarea id="recalledWords" rows="3" placeholder="например: квартира человек посетитель дерево"></textarea></div>
+                    <button id="checkRecallBtn" class="btn btn-primary">🔍 Проверить память</button>
+                    <div id="recallResult" class="info-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-clock" class="tab-content">
+        <div class="card">
+            <h2>🖌️ Тест рисования часов</h2>
+            <p>Нарисуйте циферблат, цифры от 1 до 12 и стрелки на <strong>10 часов 10 минут</strong>.</p>
+            <div class="toolbar">
+                <button id="startDrawingBtn" class="btn btn-primary">▶️ Начать рисование</button>
+                <button id="clearCanvasBtn" class="btn btn-secondary">🧽 Очистить</button>
+                <button id="eraserBtn" class="btn btn-warning">🧽 Ластик</button>
+            </div>
+            <div class="canvas-container"><canvas id="clockCanvas" width="500" height="500"></canvas></div>
+            <div class="checklist">
+                <p><strong>📋 Оцените рисунок (отметьте галочками):</strong></p>
+                <div class="checklist-item"><input type="checkbox" id="checkCircle"> <label>✅ Нарисован круг (циферблат)</label></div>
+                <div class="checklist-item"><input type="checkbox" id="checkNumbers"> <label>✅ Расставлены цифры от 1 до 12</label></div>
+                <div class="checklist-item"><input type="checkbox" id="checkHands"> <label>✅ Нарисованы стрелки на 10:10</label></div>
+            </div>
+            <button id="saveDrawingResult" class="btn btn-success" disabled>💾 Сохранить результат рисования</button>
+            <div id="drawingResult" class="info-box"></div>
+        </div>
+    </div>
+
+    <div id="tab-animals" class="tab-content">
+        <div class="card">
+            <h2>🐾 Тест «Назвать животных»</h2>
+            <p><strong>Задание:</strong> Напишите как можно больше названий животных за 1 минуту (каждое с новой строки или через пробел).</p>
+            <div class="timer-badge">⏱️ Осталось: <span id="animalsTimer">60</span> сек</div>
+            <button id="startAnimalsBtn" class="btn btn-primary">▶️ Начать тест (60 секунд)</button>
+            <div class="form-group" style="margin-top: 20px;"><label>Список животных</label><textarea id="animalsInput" rows="6" placeholder="Напишите животных здесь..."></textarea></div>
+            <button id="saveAnimalsResult" class="btn btn-success" disabled>💾 Сохранить результат</button>
+            <div id="animalsInfo" class="info-box"></div>
+        </div>
+    </div>
+
+    <div id="tab-stats" class="tab-content">
+        <div class="card"><h2>📊 Динамика когнитивных тестов</h2><canvas id="statsChart" width="600" height="300"></canvas></div>
+        <div class="card"><h3>📋 История тестов</h3><div id="historyList" class="history-list"></div></div>
+        <div class="card"><h3>⚠️ Рекомендация</h3><div id="recommendationText"></div></div>
+        <button id="exportDataBtn" class="btn btn-secondary">📎 Экспорт данных (JSON)</button>
+    </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
