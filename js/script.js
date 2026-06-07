@@ -1,4 +1,7 @@
-let patient = { name: "", birth: "" };
+let patient = null;
+
+let patientsDatabase = {};
+
 let results = [];
 
 let currentSession = {
@@ -29,6 +32,7 @@ const BASE_WORDS = [
 let drawingActive = false;
 let eraserMode = false;
 let drawingStarted = false;
+
 const canvas = document.getElementById("clockCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -70,34 +74,72 @@ function stopGlobalTimer() {
     }
 }
 
-// ---------- LOCAL STORAGE ----------
-function loadData() {
-    try {
-        const savedPatient = localStorage.getItem("cognitive_patient");
-        if (savedPatient) {
-            patient = JSON.parse(savedPatient);
-            document.getElementById("patientName").value = patient.name || "";
-            document.getElementById("patientBirth").value = patient.birth || "";
-            displayPatientInfo();
-        }
-        const savedResults = localStorage.getItem("cognitive_results");
-        if (savedResults) {
-            results = JSON.parse(savedResults);
-        }
-        updateStats();
-    } catch (err) {
-        console.error("Ошибка загрузки данных:", err);
-    }
+function getPatientKey() {
+    const name = patient.name.trim().toLowerCase().replace(/\s+/g, '_');
+    const birth = patient.birth;
+    return `cognitive_results_${name}_${birth}`;
+}
+//Функция обновления списка пациентов
+function updatePatientSelector(){
+
+    const selector =
+    document.getElementById("patientSelector");
+
+    selector.innerHTML =
+    '<option value="">-- выбрать пациента --</option>';
+
+    Object.keys(patientsDatabase).forEach(key=>{
+
+        const p =
+        patientsDatabase[key].patient;
+
+        const option =
+        document.createElement("option");
+
+        option.value=key;
+
+        option.textContent=
+        `${p.name} (${p.birth})`;
+
+        selector.appendChild(option);
+
+    });
+
 }
 
-function saveAll() {
-    try {
-        localStorage.setItem("cognitive_patient", JSON.stringify(patient));
-        localStorage.setItem("cognitive_results", JSON.stringify(results));
-        updateStats();
-    } catch (err) {
-        console.error("Ошибка сохранения:", err);
+// ---------- LOCAL STORAGE ----------
+function loadData(){
+
+    const db = localStorage.getItem("cognitive_database");
+
+    if(db){
+        patientsDatabase = JSON.parse(db);
     }
+
+    updatePatientSelector();
+}
+
+function saveAll(){
+
+    if(!patient) return;
+
+    const key = getPatientKey();
+
+    patientsDatabase[key] = {
+
+        patient: {...patient},
+
+        results: results
+    };
+
+    localStorage.setItem(
+        "cognitive_database",
+        JSON.stringify(patientsDatabase)
+    );
+
+    updatePatientSelector();
+
+    updateStats();
 }
 
 function displayPatientInfo() {
@@ -115,7 +157,9 @@ function displayPatientInfo() {
 
 function clearAllData() {
     if (confirm("🗑️ Удалить все данные о пациенте и результатах тестов?")) {
-        localStorage.clear();
+        const key = getPatientKey();
+        localStorage.removeItem("cognitive_patient");
+        localStorage.removeItem(key);
         location.reload();
     }
 }
@@ -267,6 +311,40 @@ document.getElementById("eraserBtn").addEventListener("click", () => {
     const btn = document.getElementById("eraserBtn");
     btn.style.background = eraserMode ? "#d97706" : "#f59e0b";
     btn.innerText = eraserMode ? "✏️ Рисование" : "🧽 Ластик";
+});
+
+document
+.getElementById("patientSelector")
+.addEventListener("change",(e)=>{
+
+    const key = e.target.value;
+
+    const saveBtn = document.getElementById("savePatientBtn");
+
+    if (!key) {
+        patient = null;
+        results = [];
+
+        saveBtn.disabled = false; // можно создавать нового пациента
+        saveBtn.innerText = "💾 Сохранить пациента";
+
+        return;
+    }
+
+    const data = patientsDatabase[key];
+
+    patient = data.patient;
+    results = data.results || [];
+
+    document.getElementById("patientName").value = patient.name;
+    document.getElementById("patientBirth").value = patient.birth;
+
+    displayPatientInfo();
+    updateStats();
+
+    // 🔒 блокируем сохранение (чтобы не перезаписать)
+    saveBtn.disabled = true;
+    saveBtn.innerText = "🔒 Пациент уже сохранён (выберите другого или создайте нового)";
 });
 
 function saveDrawing() {
@@ -448,17 +526,43 @@ function updateStats() {
         }
         if (worsenedMemory && worsenedDrawing && worsenedAnimals) {
             level = "high";
-            text += "<br><br>⚠️ Наблюдается ухудшение по всем параметрам.";
+            text += "<br><br>⚠️ Наблюдается ухудшение по всем параметрам. Желательно обратиться к врачу";
         }
     }
     recommendationText.innerHTML = text;
     recommendationText.className = level === "low" ? "recommendation-low" : level === "mid" ? "recommendation-mid" : "recommendation-high";
 }
+function createNewPatient() {
 
+    patient = null;
+    results = [];
+
+    document.getElementById("patientName").value = "";
+    document.getElementById("patientBirth").value = "";
+
+    const saveBtn = document.getElementById("savePatientBtn");
+    saveBtn.disabled = false;
+    saveBtn.innerText = "💾 Сохранить пациента";
+
+    document.getElementById("patientSelector").value = "";
+
+    displayPatientInfo();
+}
+document.getElementById("newPatientBtn").addEventListener("click", createNewPatient);
 // ---------- ОБРАБОТЧИКИ ----------
-document.getElementById("savePatientBtn").addEventListener("click", () => {
-    patient.name = document.getElementById("patientName").value;
-    patient.birth = document.getElementById("patientBirth").value;
+document.getElementById("savePatientBtn")
+.addEventListener("click",()=>{
+
+    // если кнопка заблокирована — ничего не делаем
+    if (document.getElementById("savePatientBtn").disabled) return;
+
+    patient = {
+        name: document.getElementById("patientName").value,
+        birth: document.getElementById("patientBirth").value
+    };
+
+    results = [];
+
     displayPatientInfo();
     saveAll();
 });
@@ -469,8 +573,18 @@ document.getElementById("checkRecallBtn").addEventListener("click", checkRecall)
 document.getElementById("saveDrawingResult").addEventListener("click", saveDrawing);
 startAnimalsBtn.addEventListener("click", startAnimalsTest);
 saveAnimalsBtn.addEventListener("click", saveAnimals);
-document.getElementById("exportDataBtn").addEventListener("click", () => {
-    const exportData = JSON.stringify({ patient, results }, null, 2);
+document
+.getElementById("exportDataBtn")
+.addEventListener("click",()=>{
+
+const exportData=
+JSON.stringify({
+
+patient,
+
+results
+
+},null,2);
     const blob = new Blob([exportData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

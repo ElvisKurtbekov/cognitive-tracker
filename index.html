@@ -31,7 +31,11 @@
             <div class="form-group"><label>Имя пациента</label><input type="text" id="patientName" placeholder="Иван Петрович"></div>
             <div class="form-group"><label>Дата рождения</label><input type="date" id="patientBirth"></div>
             <button id="savePatientBtn" class="btn btn-primary">💾 Сохранить профиль</button>
+            <button id="newPatientBtn" class="btn btn-new">➕ Новый пациент</button>
             <button id="clearAllDataBtn" class="btn btn-danger">🗑️ Очистить все данные</button>
+            <div class="form-group"><label>Выбрать пациента</label><select id="patientSelector" class="patient-select"><option value="">-- выбрать пациента --</option></select>
+
+</div>
             <div id="patientInfo" class="info-box"></div>
         </div>
     </div>
@@ -99,6 +103,6 @@
         <button id="exportDataBtn" class="btn btn-secondary">📎 Экспорт данных (JSON)</button>
     </div>
 </div>
-<script src="script.js"></script>
+<script src="js/script.js"></script>
 </body>
 </html>
